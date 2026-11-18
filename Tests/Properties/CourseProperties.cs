@@ -60,5 +60,57 @@ namespace Online_Course_Enrollment_System_Properties.Tests.Properties
             course.FreeSeats.Should().Be(seatsBefore);
             course.IsEnrolled(student.Id).Should().BeTrue();
         }
+
+        // P2 · Інваріант
+        [Property(Arbitrary = new[] { typeof(CourseArbitraries) })]
+        public void Full_course_does_not_enroll_another_student(Course course, Student student)
+        {
+            for (int i = 0; i < course.Capacity; i++)
+                course.Enroll(new Student($"Filled{i}"));
+
+            var countBefore = course.Students.Count;
+            var enrolled = course.Enroll(student);
+
+            enrolled.Should().BeFalse();
+            course.Students.Count.Should().Be(countBefore);
+            course.FreeSeats.Should().Be(0);
+            course.IsEnrolled(student.Id).Should().BeFalse();
+        }
+
+        // P2 · Інваріант: некоректний запис не змінює список студентів
+        [Property(Arbitrary = new[] { typeof(CourseArbitraries) })]
+        public void Enroll_null_throws(Course course, Student[] students)
+        {
+            foreach (var student in students)
+                course.Enroll(student);
+
+            var studentsBefore = course.Students.ToArray();
+            Action act = () => course.Enroll(null!);
+
+            act.Should().Throw<ArgumentNullException>();
+            course.Students.Should().Equal(studentsBefore);
+        }
+
+        // P2 · Інваріант: скасування відсутнього запису не змінює список студентів
+        [Property(Arbitrary = new[] { typeof(CourseArbitraries) })]
+        public Property Unenroll_missing_student_throws(Course course, Student[] students, Student student)
+        {
+            foreach (var enrolled in students)
+                course.Enroll(enrolled);
+
+            bool applicable = !course.IsEnrolled(student.Id);
+            bool ok = true;
+
+            if (applicable)
+            {
+                var studentsBefore = course.Students.ToArray();
+                Action act = () => course.Unenroll(student.Id);
+
+                act.Should().Throw<InvalidOperationException>();
+                ok = course.Students.SequenceEqual(studentsBefore);
+            }
+
+            return ok.When(applicable);
+        }
     }
 }
