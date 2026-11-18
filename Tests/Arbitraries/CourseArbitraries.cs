@@ -1,4 +1,4 @@
-﻿using FsCheck;
+using FsCheck;
 using FsCheck.Fluent;
 using Online_Course_Enrollment_System_Properties.Domain;
 
@@ -12,13 +12,20 @@ namespace Online_Course_Enrollment_System_Properties.Tests.Arbitraries
         // «один студент не записується двічі».
         public static Arbitrary<Student> Student()
         {
-            throw new NotImplementedException();
+            var gen = Gen.Choose(1, 20)
+                .Select(n => new Student($"S{n}"));
+
+            return Arb.From(gen);
         }
 
         // Course: Id — непорожній рядок, Capacity >= 1. Включіть граничний випадок Capacity = 1.
         public static Arbitrary<Course> Course()
         {
-            throw new NotImplementedException();
+            var gen = from id in Gen.Choose(1, 20)
+                      from capacity in Gen.Choose(1, 20)
+                      select new Course($"C{id}", capacity);
+
+            return Arb.From(gen);
         }
 
         // Масив студентів (Student[]) окремо писати не потрібно:
